@@ -1,0 +1,11 @@
+# secrets
+.env
+*.pem
+*.key
+passwords*
+# big VM files
+*.vdi
+*.ova
+*.iso
+# scan output that may contain sensitive data until reviewed
+raw-scans/
