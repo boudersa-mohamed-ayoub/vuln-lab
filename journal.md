@@ -13,16 +13,19 @@
 - `curl http://127.0.0.1:8080` returned the nginx welcome page and the access log recorded `GET / HTTP/1.1" 200 896`.
 - `curl http://127.0.0.1:8080/does-not-exist` was logged as `404 153`, and the error log said nginx could not open `/usr/share/nginx/html/does-not-exist` (No such file or directory).
 - The client address in both log lines was 172.17.0.1, not 127.0.0.1, although I ran curl from the VM itself.
+- Test: `docker inspect` gave the container address 172.17.0.2; `ip a show docker0` gave the VM's address on the Docker network, 172.17.0.1/16. `curl http://172.17.0.2` (direct, no published port) worked, and the access log again recorded client 172.17.0.1.
 
 **What I learned:**
 - A web server is a program that waits for requests and answers them, so its container stays Up; hello-world exits because its program finishes.
 - `-p 127.0.0.1:8080:80` publishes container port 80 on VM port 8080, reachable only from the VM itself.
 - Scanners that match versions can report flaws that are already fixed, because vendors sometimes patch without changing the version number (backporting). Not yet observed in my lab; I will look for it when Grype, Trivy and Greenbone disagree.
+- The client address 172.17.0.1 is the VM's own address on Docker's private network (docker0, 172.17.0.0/16). Requests from the VM to a container appear to come from it, so my hypothesis was correct.
+- A log's client address shows the nearest sender, not necessarily the original one. Behind a go-between like Docker, the log can show the go-between's address.
 
 **Open questions:**
-- Is the client address 172.17.0.1 because Docker sits between the VM and the container? Hypothesis: yes. Test: curl the container's own address directly and compare the log line.
+- Both the published-port request and the direct request logged 172.17.0.1, but I only checked the direct path. Does Docker forward the published-port request through the same address, and by what mechanism?
 
-**Next:** Test the client-address hypothesis, then Day 2b: Docker Compose, volumes and networks.
+**Next:** Day 2b: Docker Compose, volumes and networks.
 
 ---
 
