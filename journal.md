@@ -1,3 +1,51 @@
+## 2026-11-20 - Web server in a container, and reading its logs
+
+**Goal:** Learn how a container that keeps running differs from one
+that exits, and see what a web server records about requests.
+
+**What I did:**
+1. Ran nginx in the background (`docker run -d --name web nginx`) and
+   compared its STATUS with hello-world's.
+2. Used `docker logs`, `docker exec`, `docker stop` and `docker rm`,
+   and watched `web` leave `docker ps` after stop, then leave
+   `docker ps -a` after rm.
+3. Re-ran it with `-p 127.0.0.1:8080:80`, sent requests with curl, and
+   read the access and error logs.
+
+**What happened:**
+- `docker exec web nginx -v` printed `nginx/1.31.9`.
+- While running, `web` showed STATUS "Up"; hello-world showed "Exited".
+- `curl http://127.0.0.1:8080` returned the nginx welcome page and the
+  access log recorded `GET / HTTP/1.1" 200 896`.
+- `curl http://127.0.0.1:8080/does-not-exist` was logged as
+  `404 153`, and the error log said nginx could not open
+  `/usr/share/nginx/html/does-not-exist` (No such file or directory).
+- The client address in both log lines was 172.17.0.1, not 127.0.0.1,
+  although I ran curl from the VM itself.
+
+**What I learned:**
+- A web server is a program that waits for requests and answers them,
+  so its container stays Up; hello-world exits because its program
+  finishes.
+- `-p 127.0.0.1:8080:80` publishes container port 80 on VM port 8080,
+  reachable only from the VM itself.
+- Scanners that match versions can report flaws that are already
+  fixed, because vendors sometimes patch without changing the version
+  number (backporting). Not yet observed in my lab; I will look for it
+  when Grype, Trivy and Greenbone disagree.
+
+**Open questions:**
+- Is the client address 172.17.0.1 because Docker sits between the VM
+  and the container? Hypothesis: yes. Test: curl the container's own
+  address directly and compare the log line.
+
+**Next:** Test the client-address hypothesis, then Day 2b: Docker
+Compose, volumes and networks.
+
+
+---
+
+
 \## 2026-11-19 - Host baseline, Targets VM and Docker
 
 
